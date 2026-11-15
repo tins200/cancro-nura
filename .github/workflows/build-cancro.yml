@@ -27,21 +27,25 @@ jobs:
 
       - name: 准备 pmaports + 放入 cancro 设备包 (armv7 改造版)
         run: |
-          W=$HOME/pmwork
-          git clone https://gitlab.nura.eco/nura/pmaports.git $W/pmaports
-          cp -r "$GITHUB_WORKSPACE/device-xiaomi-cancro" $W/pmaports/device/testing/
-          cp -r "$GITHUB_WORKSPACE/linux-xiaomi-cancro"  $W/pmaports/device/testing/
-          grep -H "^arch=" $W/pmaports/device/testing/device-xiaomi-cancro/APKBUILD \
-                          $W/pmaports/device/testing/linux-xiaomi-cancro/APKBUILD
+          P=$HOME/.local/var/pmbootstrap/cache_git
+          mkdir -p $P
+          git clone https://gitlab.nura.eco/nura/pmaports.git $P/pmaports
+          cp -r "$GITHUB_WORKSPACE/device-xiaomi-cancro" $P/pmaports/device/testing/
+          cp -r "$GITHUB_WORKSPACE/linux-xiaomi-cancro"  $P/pmaports/device/testing/
+          grep -H "^arch=" $P/pmaports/device/testing/device-xiaomi-cancro/APKBUILD \
+                          $P/pmaports/device/testing/linux-xiaomi-cancro/APKBUILD
 
       - name: 下载内核源码包并校验 sha512
         run: |
-          W=$HOME/pmwork
-          mkdir -p $W/cache_distfiles
-          T=$W/cache_distfiles/linux-xiaomi-cancro-b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz
+          T=linux-xiaomi-cancro-b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz
           curl -fsSL -o "$T" \
-            "https://github.com/tins200/cancro-nura/releases/download/v1/linux-xiaomi-cancro-b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz"
+            "https://github.com/tins200/cancro-nura/releases/download/v1/$T"
           echo "f24bf599d5a4de3729ceea6a558013a71b550ae772968928cc0825115665a267f65cb16c3b69ed3223e069886c7a1ca16bd0a754cc081accda2ce34fec3b1b58  $T" | sha512sum -c -
+          # v3 distfiles 可能在 workdir 或用户级缓存, 两处都放
+          mkdir -p "$HOME/pmwork/cache_distfiles" "$HOME/.local/var/pmbootstrap/cache_distfiles"
+          cp "$T" "$HOME/pmwork/cache_distfiles/"
+          cp "$T" "$HOME/.local/var/pmbootstrap/cache_distfiles/"
+          find "$HOME/.local/var/pmbootstrap" -maxdepth 2 -type d | head -10
 
       - name: pmbootstrap 非交互配置
         run: |
