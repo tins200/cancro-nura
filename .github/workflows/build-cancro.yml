@@ -60,7 +60,7 @@ jobs:
       - name: 构建镜像 (gcc6 + 3.4 内核, 约 1-3 小时)
         run: |
           df -h /
-          pmbootstrap -w "$HOME/pmwork" install
+          pmbootstrap -w "$HOME/pmwork" install --password 147147
           df -h /
 
       - name: 导出产物
