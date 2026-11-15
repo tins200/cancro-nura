@@ -75,14 +75,18 @@ jobs:
       - name: 构建镜像 (gcc6 + 3.4 内核, 约 1-3 小时)
         run: |
           df -h /
-          pmbootstrap -w "$HOME/pmwork" install --password 147147
+          pmbootstrap -w "$HOME/pmwork" --details-to-stdout install --password 147147
           df -h /
 
       - name: 失败时导出构建日志
         if: failure()
         run: |
           echo "=== pmwork/log.txt 尾部 ==="
-          tail -120 "$HOME/pmwork/log.txt" || echo "log.txt 不存在"
+          tail -400 "$HOME/pmwork/log.txt" || echo "log.txt 不存在"
+          echo "=== dmesg OOM 线索 ==="
+          (dmesg 2>/dev/null || sudo dmesg 2>/dev/null) | grep -iE "killed|oom|out of memory" | tail -10
+          echo "=== 内存 ==="
+          free -h
           echo "=== pmwork 目录 ==="
           ls "$HOME/pmwork" 2>/dev/null | head -20
 
