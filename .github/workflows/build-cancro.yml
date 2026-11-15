@@ -45,7 +45,7 @@ jobs:
 
       - name: pmbootstrap 非交互配置
         run: |
-          PM() { pmbootstrap --workdir $HOME/pmwork "$@"; }
+          PM() { pmbootstrap -w "$HOME/pmwork" "$@"; }
           PM config vendor xiaomi || true
           PM config device xiaomi-cancro || true
           PM config kernel downstream || true
@@ -57,7 +57,7 @@ jobs:
       - name: 构建镜像 (gcc6 + 3.4 内核, 约 1-3 小时)
         run: |
           df -h /
-          pmbootstrap --workdir $HOME/pmwork install
+          pmbootstrap -w "$HOME/pmwork" install
           df -h /
 
       - name: 导出产物
