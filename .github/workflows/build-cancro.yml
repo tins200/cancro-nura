@@ -25,15 +25,17 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           pmbootstrap --version
 
-      - name: 准备 pmaports + 放入 cancro 设备包 (armv7 改造版)
+      - name: 准备 pmaports + 原地覆盖 cancro 包为 armv7 版
         run: |
           P=$HOME/.local/var/pmbootstrap/cache_git
           mkdir -p $P
           git clone https://gitlab.nura.eco/nura/pmaports.git $P/pmaports
-          cp -r "$GITHUB_WORKSPACE/device-xiaomi-cancro" $P/pmaports/device/testing/
-          cp -r "$GITHUB_WORKSPACE/linux-xiaomi-cancro"  $P/pmaports/device/testing/
-          grep -H "^arch=" $P/pmaports/device/testing/device-xiaomi-cancro/APKBUILD \
-                          $P/pmaports/device/testing/linux-xiaomi-cancro/APKBUILD
+          rm -rf $P/pmaports/device/archived/device-xiaomi-cancro \
+                 $P/pmaports/device/archived/linux-xiaomi-cancro
+          cp -r "$GITHUB_WORKSPACE/device-xiaomi-cancro" $P/pmaports/device/archived/
+          cp -r "$GITHUB_WORKSPACE/linux-xiaomi-cancro"  $P/pmaports/device/archived/
+          grep -H "^arch=" $P/pmaports/device/archived/device-xiaomi-cancro/APKBUILD \
+                           $P/pmaports/device/archived/linux-xiaomi-cancro/APKBUILD
 
       - name: 下载内核源码包并校验 sha512
         run: |
