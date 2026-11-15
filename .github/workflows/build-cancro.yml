@@ -1,0 +1,76 @@
+name: build-cancro
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 环境信息
+        run: |
+          df -h / || true
+          nproc
+          free -h
+          ls /proc/sys/fs/binfmt_misc/ | head -10
+
+      - name: 安装 pmbootstrap (Nura main 分支)
+        run: |
+          python3 -m pip install --user "git+https://gitlab.nura.eco/nura/pmbootstrap.git@main"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pmbootstrap --version
+
+      - name: 准备 pmaports + 放入 cancro 设备包 (armv7 改造版)
+        run: |
+          W=$HOME/pmwork
+          git clone https://gitlab.nura.eco/nura/pmaports.git $W/pmaports
+          cp -r "$GITHUB_WORKSPACE/device-xiaomi-cancro" $W/pmaports/device/testing/
+          cp -r "$GITHUB_WORKSPACE/linux-xiaomi-cancro"  $W/pmaports/device/testing/
+          grep -H "^arch=" $W/pmaports/device/testing/device-xiaomi-cancro/APKBUILD \
+                          $W/pmaports/device/testing/linux-xiaomi-cancro/APKBUILD
+
+      - name: 下载内核源码包并校验 sha512
+        run: |
+          W=$HOME/pmwork
+          mkdir -p $W/cache_distfiles
+          T=$W/cache_distfiles/linux-xiaomi-cancro-b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz
+          curl -fsSL -o "$T" \
+            "https://codeload.github.com/LineageOS/android_kernel_xiaomi_cancro/archive/b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz"
+          echo "f24bf599d5a4de3729ceea6a558013a71b550ae772968928cc0825115665a267f65cb16c3b69ed3223e069886c7a1ca16bd0a754cc081accda2ce34fec3b1b58  $T" | sha512sum -c -
+
+      - name: pmbootstrap 非交互配置
+        run: |
+          PM() { pmbootstrap --workdir $HOME/pmwork "$@"; }
+          PM config vendor xiaomi || true
+          PM config device xiaomi-cancro || true
+          PM config kernel downstream || true
+          PM config ui none || true
+          PM config user pmos || true
+          PM config timezone Asia/Shanghai || true
+          PM config || true
+
+      - name: 构建镜像 (gcc6 + 3.4 内核, 约 1-3 小时)
+        run: |
+          df -h /
+          pmbootstrap --workdir $HOME/pmwork install
+          df -h /
+
+      - name: 导出产物
+        run: |
+          mkdir -p out
+          find $HOME/pmwork/chroot_native/home/pmos/rootfs -maxdepth 1 -name "*.img" \
+            -exec cp -v {} out/ \;
+          ls -la out/
+          [ -n "$(ls -A out 2>/dev/null)" ] || { echo "没有 img 产物!"; exit 1; }
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: cancro-images
+          path: out/
+          retention-days: 30
