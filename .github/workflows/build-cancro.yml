@@ -40,7 +40,7 @@ jobs:
           mkdir -p $W/cache_distfiles
           T=$W/cache_distfiles/linux-xiaomi-cancro-b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz
           curl -fsSL -o "$T" \
-            "https://codeload.github.com/LineageOS/android_kernel_xiaomi_cancro/archive/b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz"
+            "https://github.com/tins200/cancro-nura/releases/download/v1/linux-xiaomi-cancro-b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz"
           echo "f24bf599d5a4de3729ceea6a558013a71b550ae772968928cc0825115665a267f65cb16c3b69ed3223e069886c7a1ca16bd0a754cc081accda2ce34fec3b1b58  $T" | sha512sum -c -
 
       - name: pmbootstrap 非交互配置
