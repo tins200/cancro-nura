@@ -29,7 +29,7 @@ jobs:
         run: |
           P=$HOME/.local/var/pmbootstrap/cache_git
           mkdir -p $P
-          git clone https://gitlab.nura.eco/nura/pmaports.git $P/pmaports
+          git clone https://gitlab.postmarketos.org/postmarketOS/pmaports.git $P/pmaports
           rm -rf $P/pmaports/device/archived/device-xiaomi-cancro \
                  $P/pmaports/device/archived/linux-xiaomi-cancro
           cp -r "$GITHUB_WORKSPACE/device-xiaomi-cancro" $P/pmaports/device/archived/
