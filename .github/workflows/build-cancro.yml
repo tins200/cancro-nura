@@ -49,16 +49,13 @@ jobs:
           cp "$T" "$HOME/.local/var/pmbootstrap/cache_distfiles/"
           find "$HOME/.local/var/pmbootstrap" -maxdepth 2 -type d | head -10
 
-      - name: pmbootstrap 非交互配置
+      - name: pmbootstrap init (管道喂预设答案)
         run: |
-          PM() { pmbootstrap -w "$HOME/pmwork" "$@"; }
-          PM config vendor xiaomi || true
-          PM config device xiaomi-cancro || true
-          PM config kernel downstream || true
-          PM config ui none || true
-          PM config user pmos || true
-          PM config timezone Asia/Shanghai || true
-          PM config || true
+          printf '\n\n\nxiaomi\ncancro\ny\n' > /tmp/answers.txt
+          yes '' | head -60 >> /tmp/answers.txt
+          pmbootstrap -w "$HOME/pmwork" init < /tmp/answers.txt 2>&1 | tail -80
+          echo "--- 生成的配置 ---"
+          find "$HOME/.config" -name "pmpconfig" -exec cat {} \; 2>/dev/null | head -40
 
       - name: 构建镜像 (gcc6 + 3.4 内核, 约 1-3 小时)
         run: |
