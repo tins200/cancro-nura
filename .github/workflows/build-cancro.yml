@@ -63,6 +63,14 @@ jobs:
           pmbootstrap -w "$HOME/pmwork" install --password 147147
           df -h /
 
+      - name: 失败时导出构建日志
+        if: failure()
+        run: |
+          echo "=== pmwork/log.txt 尾部 ==="
+          tail -120 "$HOME/pmwork/log.txt" || echo "log.txt 不存在"
+          echo "=== pmwork 目录 ==="
+          ls "$HOME/pmwork" 2>/dev/null | head -20
+
       - name: 导出产物
         run: |
           mkdir -p out
