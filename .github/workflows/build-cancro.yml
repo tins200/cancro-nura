@@ -34,6 +34,18 @@ jobs:
                  $P/pmaports/device/archived/linux-xiaomi-cancro
           cp -r "$GITHUB_WORKSPACE/device-xiaomi-cancro" $P/pmaports/device/archived/
           cp -r "$GITHUB_WORKSPACE/linux-xiaomi-cancro"  $P/pmaports/device/archived/
+          # 仓库里的 3 个补丁是符号链接的文本残留, 用真实共享补丁替换
+          for f in 02_gpu-msm-fix-gcc5-compile.patch \
+                   gcc10-extern_YYLOC_global_declaration.patch \
+                   linux3.4-ARM-8933-1-replace-Sun-Solaris-style-flag-on-section.patch; do
+            if [ -f "$P/pmaports/device/.shared-patches/linux/$f" ]; then
+              cp "$P/pmaports/device/.shared-patches/linux/$f" \
+                 "$P/pmaports/device/archived/linux-xiaomi-cancro/$f"
+              echo "替换共享补丁: $f"
+            else
+              echo "警告: 共享补丁不存在: $f"
+            fi
+          done
           grep -H "^arch=" $P/pmaports/device/archived/device-xiaomi-cancro/APKBUILD \
                            $P/pmaports/device/archived/linux-xiaomi-cancro/APKBUILD
 
@@ -56,6 +68,9 @@ jobs:
           pmbootstrap -w "$HOME/pmwork" init < /tmp/answers.txt 2>&1 | tail -80
           echo "--- 生成的配置 ---"
           find "$HOME/.config" -name "pmpconfig" -exec cat {} \; 2>/dev/null | head -40
+          echo "--- 重新生成源码校验和 (修正 archived 陈旧 sha) ---"
+          pmbootstrap -w "$HOME/pmwork" checksum linux-xiaomi-cancro
+          pmbootstrap -w "$HOME/pmwork" checksum device-xiaomi-cancro
 
       - name: 构建镜像 (gcc6 + 3.4 内核, 约 1-3 小时)
         run: |
