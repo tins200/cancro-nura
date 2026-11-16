@@ -48,8 +48,11 @@ jobs:
           cp "$GITHUB_WORKSPACE/kernel-legacy/config-xiaomi-cancro.armv7" arch/arm/configs/cancro_tc_defconfig
           export PATH=/opt/tc/bin:$PATH
           export ARCH=arm
-          export CROSS_COMPILE=$(ls /opt/tc/bin | grep -oE '^[a-z0-9_-]+(?=-gcc$)' | head -1)-
+          CCBIN=$(ls /opt/tc/bin | grep -- '-gcc$' | head -1)
+          echo "CCBIN=$CCBIN"
+          export CROSS_COMPILE="${CCBIN%-gcc}-"
           echo "CROSS_COMPILE=$CROSS_COMPILE"
+          ${CROSS_COMPILE}gcc --version | head -2
           make cancro_tc_defconfig
           grep -E "^CONFIG_KERNEL_(GZIP|LZMA)|^CONFIG_PHYS_OFFSET|^CONFIG_BUILD_ARM_APPENDED" .config
           make -j"$(nproc)" zImage-dtb 2>&1 | tail -60

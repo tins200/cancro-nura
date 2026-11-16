@@ -3,6 +3,10 @@ name: build-cancro
 on:
   push:
     branches: [main]
+    paths:
+      - 'device-xiaomi-cancro/**'
+      - 'linux-xiaomi-cancro/**'
+      - '.github/workflows/build-cancro.yml'
   workflow_dispatch:
 
 jobs:
