@@ -1,0 +1,68 @@
+name: build-kernel-legacy-toolchain
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-kernel-legacy.yml'
+      - 'kernel-legacy/**'
+  workflow_dispatch:
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bc bison flex libssl-dev xz-utils lzop u-boot-tools device-tree-compiler zip
+
+      - name: 下载内核源码
+        run: |
+          T=linux-xiaomi-cancro-b263a8914dcb8f9609be55070c3e40c85020188d.tar.gz
+          curl -fsSL -o "/tmp/$T" "https://github.com/tins200/cancro-nura/releases/download/v1/$T"
+          mkdir -p src && tar -xzf "/tmp/$T" -C src --strip-components=1
+          ls src | head
+
+      - name: 下载老交叉编译器 (AOSP arm-eabi-4.9)
+        run: |
+          set -x
+          cd /opt
+          for repo in android_prebuilts_gcc_linux-x86_arm_arm-eabi-4.9 \
+                      android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9; do
+            if git clone --depth 1 "https://github.com/LineageOS/$repo" tc 2>/dev/null; then
+              if ls tc/bin | grep -q "gcc$"; then echo "OK $repo"; break; fi
+            fi
+            rm -rf tc
+          done
+          ls /opt/tc/bin | head -20
+          /opt/tc/bin/*gcc --version | head -2 || true
+
+      - name: 配置并编译 zImage-dtb
+        run: |
+          set -x
+          cd src
+          cp "$GITHUB_WORKSPACE/kernel-legacy/config-xiaomi-cancro.armv7" arch/arm/configs/cancro_tc_defconfig
+          export PATH=/opt/tc/bin:$PATH
+          export ARCH=arm
+          export CROSS_COMPILE=$(ls /opt/tc/bin | grep -oE '^[a-z0-9_-]+(?=-gcc$)' | head -1)-
+          echo "CROSS_COMPILE=$CROSS_COMPILE"
+          make cancro_tc_defconfig
+          grep -E "^CONFIG_KERNEL_(GZIP|LZMA)|^CONFIG_PHYS_OFFSET|^CONFIG_BUILD_ARM_APPENDED" .config
+          make -j"$(nproc)" zImage-dtb 2>&1 | tail -60
+          ls -la arch/arm/boot/zImage-dtb arch/arm/boot/Image 2>&1
+
+      - name: 上传 zImage-dtb
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cancro-zimage
+          path: |
+            src/arch/arm/boot/zImage-dtb
+            src/arch/arm/boot/zImage
+            src/.config
+          retention-days: 30
+          if-no-files-found: warn
