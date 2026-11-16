@@ -45,6 +45,17 @@ jobs:
         run: |
           set -x
           cd src
+          echo "=== 应用内核补丁 ==="
+          for f in "$GITHUB_WORKSPACE"/linux-xiaomi-cancro/*.patch; do
+            base=$(basename "$f")
+            head -1 "$f" | grep -q '^---' || { echo "跳过(非补丁) $base"; continue; }
+            if patch -p1 --forward --batch -i "$f" >>/tmp/patch.log 2>&1; then
+              echo "OK  $base"
+            else
+              echo "WARN $base 应用失败(继续)"
+            fi
+          done
+          tail -20 /tmp/patch.log || true
           cp "$GITHUB_WORKSPACE/kernel-legacy/config-xiaomi-cancro.armv7" arch/arm/configs/cancro_tc_defconfig
           export ARCH=arm
           CCBIN=$(ls /opt/tc/bin | grep -- '-gcc$' | head -1)
