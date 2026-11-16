@@ -46,16 +46,14 @@ jobs:
           set -x
           cd src
           cp "$GITHUB_WORKSPACE/kernel-legacy/config-xiaomi-cancro.armv7" arch/arm/configs/cancro_tc_defconfig
-          export PATH=/opt/tc/bin:$PATH
           export ARCH=arm
           CCBIN=$(ls /opt/tc/bin | grep -- '-gcc$' | head -1)
-          echo "CCBIN=$CCBIN"
-          export CROSS_COMPILE="${CCBIN%-gcc}-"
+          export CROSS_COMPILE="/opt/tc/bin/${CCBIN%-gcc}-"
           echo "CROSS_COMPILE=$CROSS_COMPILE"
           ${CROSS_COMPILE}gcc --version | head -2
-          make cancro_tc_defconfig
+          make HOSTCC=gcc HOSTCXX=g++ cancro_tc_defconfig
           grep -E "^CONFIG_KERNEL_(GZIP|LZMA)|^CONFIG_PHYS_OFFSET|^CONFIG_BUILD_ARM_APPENDED" .config
-          make -j"$(nproc)" zImage-dtb 2>&1 | tail -60
+          make -j"$(nproc)" HOSTCC=gcc HOSTCXX=g++ zImage-dtb 2>&1 | tail -60
           ls -la arch/arm/boot/zImage-dtb arch/arm/boot/Image 2>&1
 
       - name: 上传 zImage-dtb
