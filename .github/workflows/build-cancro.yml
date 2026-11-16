@@ -98,6 +98,34 @@ jobs:
           ls -la out/
           [ -n "$(ls -A out 2>/dev/null)" ] || { echo "没有 img 产物!"; exit 1; }
 
+      - name: 单独导出 boot.img(小体积, 便于直接下载)
+        run: |
+          set -x
+          IMG=$(ls out/*.img | head -1)
+          LOOP=$(sudo losetup -Pf --show "$IMG")
+          sudo partx -u "$LOOP" || true
+          sleep 2
+          ls -l ${LOOP}* || true
+          sudo mkdir -p /mnt/bp
+          for p in ${LOOP}p1 ${LOOP}p2; do
+            if sudo mount -o ro "$p" /mnt/bp 2>/dev/null; then
+              if sudo test -f /mnt/bp/boot.img; then
+                sudo cp /mnt/bp/boot.img out/boot-cancro.img
+                echo "found boot.img on $p"
+              fi
+              sudo umount /mnt/bp || true
+            fi
+          done
+          sudo losetup -d "$LOOP" || true
+          ls -l out/ || true
+
+      - name: 上传 boot.img(小产物)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cancro-boot
+          path: out/boot-cancro.img
+          retention-days: 30
+
       - name: 上传产物
         uses: actions/upload-artifact@v4
         with:
