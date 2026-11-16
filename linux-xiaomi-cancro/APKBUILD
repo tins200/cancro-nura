@@ -40,6 +40,7 @@ source="
 	05_q6voice.patch
 	gcc10-extern_YYLOC_global_declaration.patch
 	linux3.4-ARM-8933-1-replace-Sun-Solaris-style-flag-on-section.patch
+	99_piggy_section_flags.patch
 "
 builddir="$srcdir/$_repository-$_commit"
 
